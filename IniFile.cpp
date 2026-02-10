@@ -3,7 +3,6 @@
 #include 	<string.h>
 #include 	<stdarg.h>
 #include 	<stdlib.h>
-
 #include 	"Types.h"
 #include 	"Utility.h"
 #include 	"IniFile.h"
@@ -49,7 +48,6 @@ CIniValue *CIniValue::Set(char *AName, char *AValue)
     if(ValueName != NULL && strcmp(ValueName, AName ) != 0)     {   delete	ValueName;  ValueName   = NULL;   }
     if(Value     != NULL && strcmp(Value    , AValue) != 0)     {   delete	Value;      Value       = NULL;   }
     if(ValueName == NULL)   {   ValueName = new char[strlen(AName )+1];     memset(ValueName, 0x00, strlen(AName )+1);  SAFE_STRCPY_PTR(ValueName, AName,strlen(AName )+1 );      }
-    
     if(Value     == NULL)   {
         int      argc       = 0;
         char	*argv[2]    = { 0x00, 0x00 };
@@ -76,13 +74,15 @@ CIniValue *CIniValue::Set(char *AName, char *AValue)
 //[*]----------------------------------------------------------------------------------------------------------------[*]
 CIniValue *CIniValue::Set2(char *AName, char *AValue)
 {
+//  if(ValueName != NULL && strcmp(ValueName, AName  ) != 0)     {   delete	ValueName;  ValueName   = NULL;   }
     if(Value2    != NULL && strcmp(Value2   , AValue ) != 0)     {   delete	Value2;     Value2      = NULL;   }
+//  if(ValueName == NULL)   {   ValueName = new char[strlen(AName  )+1];     memset(ValueName, 0x00, strlen(AName  )+1);  strcpy(ValueName, AName  );   }
     if(Value2    == NULL)   {   Value2    = new char[strlen(AValue )+1];     memset(Value2   , 0x00, strlen(AValue )+1);  SAFE_STRCPY_PTR(Value2   , AValue,strlen(AValue )+1);   }
 
     return  this;
 }
 //[*]----------------------------------------------------------------------------------------------------------------[*]
-int CIniValue::GetFmtValue(char *Result, size_t nSize)
+int CIniValue::GetFmtValue(char *Result)
 {
     char    FmtStr  [20];
     char    ValueStr[40]; 
@@ -95,11 +95,11 @@ int CIniValue::GetFmtValue(char *Result, size_t nSize)
             case TYPE_INT   :   for(int i=0;i<EdtLength; i++)   {   
                                     if(EditFmt[i] == 'H')   {   IsHex = 1;  break;  }  
                                 }
-                                if(IsHex)   sprintf(FmtStr  ,  "%%0%dX", EdtLength);
-                                else        sprintf(FmtStr  ,  "%%%dd" , EdtLength);
+                                if(IsHex)   snprintf(FmtStr, sizeof(FmtStr), "%%0%dX", EdtLength);
+                                else        snprintf(FmtStr, sizeof(FmtStr), "%%%dd" , EdtLength);
 
-                                if(IsHex)   sprintf(ValueStr, FmtStr  , ABS(atoi(Value)));   
-                                else        sprintf(ValueStr, FmtStr  , ABS(atoi(Value)));
+                                if(IsHex)   snprintf(ValueStr, sizeof(ValueStr), FmtStr  , ABS(atoi(Value)));   
+                                else        snprintf(ValueStr, sizeof(ValueStr), FmtStr  , ABS(atoi(Value)));
                                 strncpy(Result , ValueStr, EdtLength);
                                 if(EditFmt[0] == '*')   {
                                     if(atoi(Value ) < 0)    Result[0] = '-';
@@ -108,8 +108,8 @@ int CIniValue::GetFmtValue(char *Result, size_t nSize)
                                 break;
             
             case TYPE_FLOAT :
-            case TYPE_DOUBLE:   sprintf(FmtStr  , "%%%d.%df", EdtLength, EdtLength - (strpos(EditFmt, '.') + 1));
-                                sprintf(ValueStr, FmtStr    , ABS(atof(Value)));
+            case TYPE_DOUBLE:   snprintf(FmtStr, sizeof(FmtStr), "%%%d.%df", EdtLength, EdtLength - (strpos(EditFmt, '.') + 1));
+                                snprintf(ValueStr, sizeof(ValueStr), FmtStr    , ABS(atof(Value)));
                                 strncpy(Result  , ValueStr  , EdtLength);
 
                                 if(EditFmt[0] == '*')   {
@@ -126,30 +126,30 @@ int CIniValue::GetFmtValue(char *Result, size_t nSize)
                                 }
                                 break;
                 
-			case TYPE_CHECK	:   SAFE_STRCPY(Temp,EditFmt);
+			case TYPE_CHECK	:   SAFE_STRCPY(Temp		, EditFmt);
                                 argc = parse_args(Temp, "|", argv, true);
                             
                                 if(argc == 2)   {
                                     if(isnumstr(Value))	{
-                                        if(atoi(Value) > 0 && atoi(Value) < argc)           SAFE_STRCPY_PTR(Result, argv[atoi(Value)], nSize);
-                                        else                                                SAFE_STRCPY_PTR(Result, argv[0], nSize);
+                                        if(atoi(Value) > 0 && atoi(Value) < argc)           strcpy(Result, argv[atoi(Value)]);
+                                        else                                                strcpy(Result, argv[0]);
                                     }   else    {
-                                        SAFE_STRCPY(ValueStr, Value);
-                                        if     (strcmp(UpperStr(ValueStr), "ON"    ) == 0)	SAFE_STRCPY_PTR(Result, argv[1], nSize);
-                                        else if(strcmp(UpperStr(ValueStr), "HIGH"  ) == 0)	SAFE_STRCPY_PTR(Result, argv[1], nSize);
-                                        else if(strcmp(UpperStr(ValueStr), "TRUE"  ) == 0)	SAFE_STRCPY_PTR(Result, argv[1], nSize);
-                                        else if(strcmp(UpperStr(ValueStr), "ENABLE") == 0)	SAFE_STRCPY_PTR(Result, argv[1], nSize);
-                                        else												SAFE_STRCPY_PTR(Result, argv[0], nSize);
+                                        strcpy(ValueStr, Value);
+                                        if     (strcmp(UpperStr(ValueStr), "ON"    ) == 0)	strcpy(Result, argv[1]);
+                                        else if(strcmp(UpperStr(ValueStr), "HIGH"  ) == 0)	strcpy(Result, argv[1]);
+                                        else if(strcmp(UpperStr(ValueStr), "TRUE"  ) == 0)	strcpy(Result, argv[1]);
+                                        else if(strcmp(UpperStr(ValueStr), "ENABLE") == 0)	strcpy(Result, argv[1]);
+                                        else												strcpy(Result, argv[0]);
                                     }
-                                }   else                                                    SAFE_STRCPY_PTR(Result, argv[0], nSize);
+                                }   else                                                    strcpy(Result, argv[0]);
                                 break;
 			case TYPE_COMBO	:
                                 SAFE_STRCPY(Temp		, EditFmt);
                                 argc = parse_args(Temp, "|", argv, true);
                                 if(isnumstr(Value))	    {
-                                    if(atoi(Value) > 0 && atoi(Value) < argc)               SAFE_STRCPY_PTR(Result, argv[atoi(Value)], nSize);
-                                    else                                                    SAFE_STRCPY_PTR(Result, argv[0], nSize);          
-                                }   else                                                    SAFE_STRCPY_PTR(Result, argv[0], nSize);          
+                                    if(atoi(Value) > 0 && atoi(Value) < argc)               strcpy(Result, argv[atoi(Value)]);
+                                    else                                                    strcpy(Result, argv[0]);          
+                                }   else                                                    strcpy(Result, argv[0]);          
                                 break;
         }
 	}	else	{
@@ -166,7 +166,7 @@ int CIniValue::GetFmtValue(char *Result, size_t nSize)
             if(Type == TYPE_CHECK || Type == TYPE_COMBO)	{
                 SAFE_STRCPY(Temp		, EditFmt);
                 argc = parse_args(Temp, "|", argv, true);
-                SAFE_STRCPY_PTR(Result, argv[0], nSize);				
+                strcpy(Result, argv[0]);				
             }
         }
 	}
@@ -185,7 +185,7 @@ int CIniValue::GetFmtValue(char *Result, size_t nSize)
     return 0;
 }
 //[*]----------------------------------------------------------------------------------------------------------------[*]
-int CIniValue::GetFmtValue2(char *Result, size_t nSize)
+int CIniValue::GetFmtValue2(char *Result)
 {
     char    FmtStr  [20];
     char    ValueStr[40]; 
@@ -236,25 +236,25 @@ int CIniValue::GetFmtValue2(char *Result, size_t nSize)
                             
                                 if(argc == 2)   {
                                     if(isnumstr(Value2))	{
-                                        if(atoi(Value2) > 0 && atoi(Value2) < argc)         SAFE_STRCPY_PTR(Result, argv[atoi(Value2)], nSize);
-                                        else                                                SAFE_STRCPY_PTR(Result, argv[0], nSize);
+                                        if(atoi(Value2) > 0 && atoi(Value2) < argc)         strcpy(Result, argv[atoi(Value2)]);
+                                        else                                                strcpy(Result, argv[0]);
                                     }   else    {
-                                        SAFE_STRCPY(ValueStr, Value2);
-                                        if     (strcmp(UpperStr(ValueStr), "ON"    ) == 0)	SAFE_STRCPY_PTR(Result, argv[1], nSize);
-                                        else if(strcmp(UpperStr(ValueStr), "HIGH"  ) == 0)	SAFE_STRCPY_PTR(Result, argv[1], nSize);
-                                        else if(strcmp(UpperStr(ValueStr), "TRUE"  ) == 0)	SAFE_STRCPY_PTR(Result, argv[1], nSize);
-                                        else if(strcmp(UpperStr(ValueStr), "ENABLE") == 0)	SAFE_STRCPY_PTR(Result, argv[1], nSize);
-                                        else												SAFE_STRCPY_PTR(Result, argv[0], nSize);
+                                        strcpy(ValueStr, Value2);
+                                        if     (strcmp(UpperStr(ValueStr), "ON"    ) == 0)	strcpy(Result, argv[1]);
+                                        else if(strcmp(UpperStr(ValueStr), "HIGH"  ) == 0)	strcpy(Result, argv[1]);
+                                        else if(strcmp(UpperStr(ValueStr), "TRUE"  ) == 0)	strcpy(Result, argv[1]);
+                                        else if(strcmp(UpperStr(ValueStr), "ENABLE") == 0)	strcpy(Result, argv[1]);
+                                        else												strcpy(Result, argv[0]);
                                     }
-                                }   else                                                    SAFE_STRCPY_PTR(Result, argv[0], nSize);
+                                }   else                                                    strcpy(Result, argv[0]);
                                 break;
 			case TYPE_COMBO	:
                                 SAFE_STRCPY(Temp		, EditFmt2);
                                 argc = parse_args(Temp, "|", argv, true);
                                 if(isnumstr(Value2))	    {
-                                    if(atoi(Value2) > 0 && atoi(Value2) < argc)             SAFE_STRCPY_PTR(Result, argv[atoi(Value2)], nSize);
-                                    else                                                    SAFE_STRCPY_PTR(Result, argv[0], nSize);          
-                                }   else                                                    SAFE_STRCPY_PTR(Result, argv[0], nSize);          
+                                    if(atoi(Value2) > 0 && atoi(Value2) < argc)             strcpy(Result, argv[atoi(Value2)]);
+                                    else                                                    strcpy(Result, argv[0]);          
+                                }   else                                                    strcpy(Result, argv[0]);          
                                 break;
         }
 	}	else	{
@@ -271,7 +271,7 @@ int CIniValue::GetFmtValue2(char *Result, size_t nSize)
             if(Type2 == TYPE_CHECK || Type2 == TYPE_COMBO)	{
                 SAFE_STRCPY(Temp		, EditFmt2);
                 argc = parse_args(Temp, "|", argv, true);
-                SAFE_STRCPY_PTR(Result, argv[0], nSize);
+                strcpy(Result, argv[0]);
             }
         }
 	}
@@ -420,19 +420,19 @@ CIniValue *CIniSection::Set(char *Name, char   *Value, int Type)
 {
     CIniValue *p = Find(Name);
     if(p != NULL)   {
-        if     (Type == TYPE_MACADDRESS)    {   char Temp[50];  sprintf(Temp, "%02X:%02X:%02X:%02X:%02X:%02X", Value[0], Value[1], Value[2], Value[3], Value[4], Value[5]);     return  p->Set(Name, Temp);     }
-        else if(Type == TYPE_IPADDRESS )    {   char Temp[50];  sprintf(Temp, "%03d.%03d.%03d.%03d"          , Value[0], Value[1], Value[2], Value[3]);                         return  p->Set(Name, Temp);     }
+        if     (Type == TYPE_MACADDRESS)    {   char Temp[50];  snprintf(Temp, sizeof(Temp), "%02X:%02X:%02X:%02X:%02X:%02X", Value[0], Value[1], Value[2], Value[3], Value[4], Value[5]);     return  p->Set(Name, Temp);     }
+        else if(Type == TYPE_IPADDRESS )    {   char Temp[50];  snprintf(Temp, sizeof(Temp), "%03d.%03d.%03d.%03d"          , Value[0], Value[1], Value[2], Value[3]);                         return  p->Set(Name, Temp);     }
         else                                {   return  p->Set(Name, Value);    }
     }   else    {
-        if     (Type == TYPE_MACADDRESS)    {   char Temp[50];  sprintf(Temp, "%02X:%02X:%02X:%02X:%02X:%02X", Value[0], Value[1], Value[2], Value[3], Value[4], Value[5]);     return  Add(Name, Temp);        }
-        else if(Type == TYPE_IPADDRESS )    {   char Temp[50];  sprintf(Temp, "%03d.%03d.%03d.%03d", Value[0], Value[1], Value[2], Value[3]);                                   return  Add(Name, Temp);        }
+        if     (Type == TYPE_MACADDRESS)    {   char Temp[50];  snprintf(Temp, sizeof(Temp), "%02X:%02X:%02X:%02X:%02X:%02X", Value[0], Value[1], Value[2], Value[3], Value[4], Value[5]);     return  Add(Name, Temp);        }
+        else if(Type == TYPE_IPADDRESS )    {   char Temp[50];  snprintf(Temp, sizeof(Temp), "%03d.%03d.%03d.%03d", Value[0], Value[1], Value[2], Value[3]);                                   return  Add(Name, Temp);        }
         else                                {   return  Add(Name, Value);       }
     }
 }
 //[*]----------------------------------------------------------------------------------------------------------------[*]
-CIniValue *CIniSection::Set (char *Name, int    Value)    {     char    B1[100];    sprintf(B1, "%d", Value);       return  Set(Name, B1);      }
-CIniValue *CIniSection::Set (char *Name, float  Value)    {     char    B1[100];    sprintf(B1, "%f", Value);       return  Set(Name, B1);      }
-CIniValue *CIniSection::Set (char *Name, double Value)    {     char    B1[100];    sprintf(B1, "%f", Value);       return  Set(Name, B1);      }
+CIniValue *CIniSection::Set (char *Name, int    Value)    {     char    B1[100];    snprintf(B1, sizeof(B1), "%d", Value);       return  Set(Name, B1);      }
+CIniValue *CIniSection::Set (char *Name, float  Value)    {     char    B1[100];    snprintf(B1, sizeof(B1), "%f", Value);       return  Set(Name, B1);      }
+CIniValue *CIniSection::Set (char *Name, double Value)    {     char    B1[100];    snprintf(B1, sizeof(B1), "%f", Value);       return  Set(Name, B1);      }
 CIniValue *CIniSection::Set (char *Name, bool   Value)    {	    return  Set(Name, (Value ? "TRUE" : "FALSE"));                                  }
 //[*]----------------------------------------------------------------------------------------------------------------[*]
 CIniValue *CIniSection::Set2(char *Name, char  *Value)
@@ -442,9 +442,9 @@ CIniValue *CIniSection::Set2(char *Name, char  *Value)
     return     NULL;
 }
 //[*]----------------------------------------------------------------------------------------------------------------[*]
-CIniValue *CIniSection::Set2(char *Name, int    Value)    {	    char    B1[100];    sprintf(B1, "%d", Value);       return  Set2(Name, B1);     }
-CIniValue *CIniSection::Set2(char *Name, float  Value)    {     char    B1[100];    sprintf(B1, "%f", Value);       return  Set2(Name, B1);     }
-CIniValue *CIniSection::Set2(char *Name, double Value)    {     char    B1[100];    sprintf(B1, "%f", Value);       return  Set2(Name, B1);     }
+CIniValue *CIniSection::Set2(char *Name, int    Value)    {	    char    B1[100];    snprintf(B1, sizeof(B1), "%d", Value);       return  Set2(Name, B1);     }
+CIniValue *CIniSection::Set2(char *Name, float  Value)    {     char    B1[100];    snprintf(B1, sizeof(B1), "%f", Value);       return  Set2(Name, B1);     }
+CIniValue *CIniSection::Set2(char *Name, double Value)    {     char    B1[100];    snprintf(B1, sizeof(B1), "%f", Value);       return  Set2(Name, B1);     }
 CIniValue *CIniSection::Set2(char *Name, bool   Value)    {	    return  Set2(Name, (Value ? "TRUE" : "FALSE"));                                 }
 //[*]----------------------------------------------------------------------------------------------------------------[*]
 CIniValue *CIniSection::Get(char *Name, char    *Value, char  *Default)
@@ -476,7 +476,7 @@ CIniValue *CIniSection::Get(char *Name, char    *Value, char  *Default, char *AF
     else                                                p->Type = TYPE_STRING;
 
     p->ValueResult 	            = (void *)Value;
-	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt, AFmt);
+	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt, AFmt,strlen(AFmt)+1);
 
     if(p->Type == TYPE_IPADDRESS)  {
         char    Temp[50];
@@ -517,7 +517,7 @@ CIniValue *CIniSection::Get2(char *Name, char    *Value, char  *Default, char *A
     p->Type2                    = TYPE_STRING;
     p->ValueResult2	            = (void *)Value;
 	if(p->EditFmt2 != NULL)     {   delete  p->EditFmt2;    p->EditFmt2 = NULL; }           //  2014.04.24  URIDURI
-	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt2, AFmt);
+	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt2, AFmt,strlen(AFmt)+1);
 	strcpy((char *)p->ValueResult2, p->Value2);
 	return	p;
 }
@@ -548,7 +548,7 @@ CIniValue *CIniSection::Get(char *Name, int    *Value, int    Default, char *AFm
 	p->Max			            = AMax;
 	p->Min		        	    = AMin;
     if(p->EditFmt != NULL)      {   delete  p->EditFmt;     p->EditFmt = NULL; }            //  2014.04.24  URIDURI
-	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt, AFmt);
+	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt, AFmt,strlen(AFmt)+1);
    *(int *)(p->ValueResult)     = atoi(p->Value);
 	return	p;
 }
@@ -563,7 +563,7 @@ CIniValue *CIniSection::Get2(char *Name, int    *Value, int    Default, char *AF
 	p->Max2			            = AMax;
 	p->Min2		        	    = AMin;
     if(p->EditFmt2 != NULL)     {   delete  p->EditFmt2;    p->EditFmt2 = NULL; }           //  2014.04.24  URIDURI
-	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt2, AFmt);
+	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt2, AFmt,strlen(AFmt)+1);
    *(int *)(p->ValueResult2)    = atoi(p->Value2);
 
 	return	p;
@@ -576,7 +576,7 @@ CIniValue *CIniSection::Get(char *Name, int    *Value, int    Default, char *AFm
     p->Type                     = TYPE_COMBO;
     p->ValueResult 	            = (void *)Value;
     if(p->EditFmt != NULL)      {   delete  p->EditFmt;     p->EditFmt = NULL; }            //  2014.04.24  URIDURI
-	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt, AFmt);
+	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt, AFmt,strlen(AFmt)+1);
    *(int *)(p->ValueResult)     = atoi(p->Value);
     
     return p;
@@ -590,7 +590,7 @@ CIniValue *CIniSection::Get2(char *Name, int    *Value, int    Default, char *AF
     p->Type2                    = TYPE_COMBO;
     p->ValueResult2	            = (void *)Value;
 	if(p->EditFmt2 != NULL)     {   delete  p->EditFmt2;    p->EditFmt2 = NULL; }           //  2014.04.24  URIDURI
-	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt2, AFmt);
+	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt2, AFmt,strlen(AFmt)+1);
    *(int *)(p->ValueResult2)    = atoi(p->Value2);
     
     return p;
@@ -622,7 +622,7 @@ CIniValue *CIniSection::Get(char *Name, float  *Value, float Default, char *AFmt
 	p->Max			            = AMax;
 	p->Min		        	    = AMin;
     if(p->EditFmt != NULL)      {   delete  p->EditFmt;     p->EditFmt = NULL; }            //  2014.04.24  URIDURI
-	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt, AFmt);
+	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt, AFmt,strlen(AFmt)+1);
    *(float *)(p->ValueResult)   = atof(p->Value);
 	return	p;
 }
@@ -637,7 +637,7 @@ CIniValue *CIniSection::Get2(char *Name, float  *Value, float Default, char *AFm
 	p->Max2			            = AMax;
 	p->Min2		        	    = AMin;
     if(p->EditFmt2 != NULL)     {   delete  p->EditFmt2;    p->EditFmt2 = NULL; }           //  2014.04.24  URIDURI
-	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt2, AFmt);
+	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt2, AFmt,strlen(AFmt)+1);
    *(float *)(p->ValueResult2)  = atof(p->Value2);
 	return	p;
 }
@@ -668,7 +668,7 @@ CIniValue *CIniSection::Get(char *Name, double  *Value, double Default, char *AF
 	p->Max			            = AMax;
 	p->Min		        	    = AMin;
     if(p->EditFmt != NULL)      {   delete  p->EditFmt;     p->EditFmt = NULL; }            //  2014.04.24  URIDURI
-	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt, AFmt);
+	p->EditFmt 	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt, AFmt,strlen(AFmt)+1);
    *(double *)(p->ValueResult)  = atof(p->Value);
 	return	p;
 }
@@ -683,7 +683,7 @@ CIniValue *CIniSection::Get2(char *Name, double  *Value, double Default, char *A
 	p->Max2			            = AMax;
 	p->Min2		        	    = AMin;
     if(p->EditFmt2 != NULL)     {   delete  p->EditFmt2;    p->EditFmt2 = NULL; }           //  2014.04.24  URIDURI
-	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		strcpy(p->EditFmt2, AFmt);
+	p->EditFmt2	        	    = new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt2, AFmt,strlen(AFmt)+1);
    *(double *)(p->ValueResult2) = atof(p->Value2);
 	return	p;
 }
@@ -697,6 +697,7 @@ CIniValue *CIniSection::Get(char *Name, bool   *Value, bool   Default)
 		if	   (strcmp(p->Value, "ON"    ) == 0)	*Value = true;
 		else if(strcmp(p->Value, "HIGH"  ) == 0)	*Value = true;
 		else if(strcmp(p->Value, "TRUE"  ) == 0)	*Value = true;
+//		else if(strcmp(p->Value, "ENABLE") == 0)	*(bool *)(p->ValueResult) = true;       //  2014.04.24  URIDURI
 		else if(strcmp(p->Value, "ENABLE") == 0)	*Value = true;                          //  2014.04.24  URIDURI
 		else									    *Value = false;
 	}
@@ -713,6 +714,7 @@ CIniValue *CIniSection::Get2(char *Name, bool   *Value, bool   Default)
 		if	   (strcmp(p->Value2, "ON"    ) == 0)   *Value = true;
 		else if(strcmp(p->Value2, "HIGH"  ) == 0)   *Value = true;
 		else if(strcmp(p->Value2, "TRUE"  ) == 0)   *Value = true;
+//		else if(strcmp(p->Value2, "ENABLE") == 0)   *(bool *)(p->ValueResult2) = true;
 		else if(strcmp(p->Value2, "ENABLE") == 0)	*Value = true;                          //  2014.04.24  URIDURI
 		else									    *Value = false;                         //  2014.04.24  URIDURI
 	}
@@ -726,7 +728,7 @@ CIniValue *CIniSection::Get(char *Name, bool   *Value, bool   Default, char *AFm
     p->Type                 = TYPE_CHECK;
     p->ValueResult 	        = (void *)Value;
     if(p->EditFmt != NULL)      {   delete  p->EditFmt;     p->EditFmt = NULL; }            //  2014.04.24  URIDURI
-	p->EditFmt 	        	= new char[strlen(AFmt)+1];		strcpy(p->EditFmt, AFmt);
+	p->EditFmt 	        	= new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt, AFmt,strlen(AFmt)+1);
 
 	if(isnumstr(p->Value))	{	                    *(bool *)(p->ValueResult) = atoi(p->Value);    	}	
     else	                {
@@ -748,7 +750,7 @@ CIniValue *CIniSection::Get2(char *Name, bool   *Value, bool   Default, char *AF
     p->Type2                = TYPE_CHECK;
     p->ValueResult2	        = (void *)Value;
     if(p->EditFmt2 != NULL)     {   delete  p->EditFmt2;    p->EditFmt2 = NULL; }           //  2014.04.24  URIDURI
-	p->EditFmt2	        	= new char[strlen(AFmt)+1];		strcpy(p->EditFmt2, AFmt);
+	p->EditFmt2	        	= new char[strlen(AFmt)+1];		SAFE_STRCPY_PTR(p->EditFmt2, AFmt,strlen(AFmt)+1);
 
 	if(isnumstr(p->Value2))	    {           	    *(bool *)(p->ValueResult2) = atoi(p->Value2);	}	
     else	                    {
